@@ -1,4 +1,11 @@
-﻿#include "stdafx.h"
+﻿/*
+	@package MuJudge-Console
+	@version 1.0
+	@author mukeran
+	@link http://www.mukeran.com
+*/
+
+#include "stdafx.h"
 #include "MuJudge-Console.h"
 
 #pragma warning(disable:4996)
