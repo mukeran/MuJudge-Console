@@ -21,7 +21,7 @@
 
 #define DEFAULT_COLOR COLOR_WHITE
 
-#define VERSION "1.1.1"
+#define VERSION "1.1.1.1"
 
 #define printferror(format, ...) setFontColor(COLOR_RED);printf(format, ##__VA_ARGS__);setFontColor(COLOR_WHITE);
 #define printfcolor(color, format, ...) setFontColor(color);printf(format, ##__VA_ARGS__);setFontColor(DEFAULT_COLOR);
@@ -140,6 +140,9 @@ int main(int argc, char* argv[], char* envp[]) {
 #pragma region consolemode
 	if (argc > 1) {
 		printf("请不带任何参数运行程序，参数Judge还未开发出来！\n");
+		if (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "-?") == 0) {
+			printf("developing...\n");
+		}
 		exit(0);
 	}
 #pragma endregion
