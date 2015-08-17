@@ -21,7 +21,7 @@
 
 #define DEFAULT_COLOR COLOR_WHITE
 
-#define VERSION "1.1"
+#define VERSION "1.1.1"
 
 #define printferror(format, ...) setFontColor(COLOR_RED);printf(format, ##__VA_ARGS__);setFontColor(COLOR_WHITE);
 #define printfcolor(color, format, ...) setFontColor(color);printf(format, ##__VA_ARGS__);setFontColor(DEFAULT_COLOR);
@@ -1176,10 +1176,10 @@ int main(int argc, char* argv[], char* envp[]) {
 						for (it = programOutput.begin(); it != programOutput.end();) {
 							if (*it == '\n') {
 								string::iterator it2;
-								for (it2 = it + 1; *it2 == ' '; it2++) {
+								for (it2 = it + 1; *it2 == ' ';) {
 									it2 = programOutput.erase(it2);
 								}
-								it = it2 + 1;
+								it = it2;
 							}
 							else if (*it == '\r') {
 								it = programOutput.erase(it);
@@ -1188,19 +1188,35 @@ int main(int argc, char* argv[], char* envp[]) {
 								it++;
 							}
 						}
+						for (it = programOutput.begin(); it != programOutput.end();) {
+							if (*it == ' ') {
+								it = programOutput.erase(it);
+							}
+							else {
+								break;
+							}
+						}
 						for (it = stdOutput.begin(); it != stdOutput.end();) {
 							if (*it == '\n') {
 								string::iterator it2;
-								for (it2 = it + 1; *it2 == ' '; it2++) {
+								for (it2 = it + 1; *it2 == ' ';) {
 									it2 = stdOutput.erase(it2);
 								}
-								it = it2 + 1;
+								it = it2;
 							}
 							else if (*it == '\r') {
 								it = stdOutput.erase(it);
 							}
 							else {
 								it++;
+							}
+						}
+						for (it = stdOutput.begin(); it != stdOutput.end();) {
+							if (*it == ' ') {
+								it = stdOutput.erase(it);
+							}
+							else {
+								break;
 							}
 						}
 					}
@@ -1260,10 +1276,10 @@ int main(int argc, char* argv[], char* envp[]) {
 						for (it = programOutput.begin(); it != programOutput.end();) {
 							if (*it == '\n') {
 								string::iterator it2;
-								for (it2 = it + 1; *it2 == '\n'; it2++) {
+								for (it2 = it + 1; *it2 == '\n';) {
 									it2 = programOutput.erase(it2);
 								}
-								it = it2 + 1;
+								it = it2;
 							}
 							else if (*it == '\r') {
 								it = programOutput.erase(it);
@@ -1275,10 +1291,10 @@ int main(int argc, char* argv[], char* envp[]) {
 						for (it = stdOutput.begin(); it != stdOutput.end();) {
 							if (*it == '\n') {
 								string::iterator it2;
-								for (it2 = it + 1; *it2 == '\n'; it2++) {
+								for (it2 = it + 1; *it2 == '\n';) {
 									it2 = stdOutput.erase(it2);
 								}
-								it = it2 + 1;
+								it = it2;
 							}
 							else if (*it == '\r') {
 								it = stdOutput.erase(it);
