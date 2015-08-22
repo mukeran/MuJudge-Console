@@ -21,7 +21,7 @@
 
 #define DEFAULT_COLOR COLOR_WHITE
 
-#define VERSION "1.1.1.1"
+#define VERSION "1.2"
 
 #define printferror(format, ...) setFontColor(COLOR_RED);printf(format, ##__VA_ARGS__);setFontColor(COLOR_WHITE);
 #define printfcolor(color, format, ...) setFontColor(color);printf(format, ##__VA_ARGS__);setFontColor(DEFAULT_COLOR);
@@ -166,7 +166,7 @@ int main(int argc, char* argv[], char* envp[]) {
 		/*
 		配置部分
 		*/
-		char pathofgcc[MAXN] = { 0 }, formatofin[MAXN] = { 0 }, formatofout[MAXN] = { 0 }, tmpmsecond[MAXN] = { 0 }, tmpjudgerules[MAXN] = { 0 };
+		char pathofgcc[MAXN] = { 0 }, formatofin[MAXN] = { 0 }, formatofout[MAXN] = { 0 }, tmpmsecond[MAXN] = { 0 }, tmpjudgerules[MAXN] = { 0 }, tmpmemorylimit[MAXN] = { 0 };
 		char pathofgccinput[MAXN] = { 0 };
 		bool isconfig = false, tmpisconfig = false;
 
@@ -239,6 +239,14 @@ int main(int argc, char* argv[], char* envp[]) {
 					else if (tmpstr.substr(0, 8) == "timeout:") {
 						memset(tmpmsecond, 0, sizeof tmpmsecond);
 						strcpy(tmpmsecond, tmpstr.substr(8, tmpstr.length() - 8).c_str());
+					}
+					else if (tmpstr.substr(0, 13) == "memorylimit: ") {
+						memset(tmpmsecond, 0, sizeof tmpmemorylimit);
+						strcpy(tmpmemorylimit, tmpstr.substr(13, tmpstr.length() - 13).c_str());
+					}
+					else if (tmpstr.substr(0, 12) == "memorylimit:") {
+						memset(tmpmsecond, 0, sizeof tmpmemorylimit);
+						strcpy(tmpmemorylimit, tmpstr.substr(12, tmpstr.length() - 12).c_str());
 					}
 					else if (tmpstr.substr(0, 12) == "judgerules: ") {
 						memset(tmpjudgerules, 0, sizeof tmpjudgerules);
@@ -611,6 +619,56 @@ int main(int argc, char* argv[], char* envp[]) {
 			break;
 		}
 		#pragma endregion
+		#pragma region config_memorylimit
+		//内存设置默认128M
+		printfcolor(COLOR_CYAN, "\n请输入最大内存限制，以兆字节(MB)为单位，如果要使用千字节(kB)作为单位，请在数字后面加上k，回车即为默认 128M\n");
+		int memorylimit = NULL;
+		tmpisconfig = isconfig;
+		while (true) {
+			setFontColor(COLOR_WHITE);
+			printf("memorylimit: ");
+			if (tmpisconfig) {
+				printf(tmpmemorylimit);
+				printf("\n");
+				tmpisconfig = false;
+			}
+			else {
+				getCString(tmpmemorylimit);
+			}
+
+			setFontColor(COLOR_RED);
+			if (tmpmemorylimit[0] == 0) {
+				memorylimit = 128 * 1024;
+				break;
+			}
+			
+			memorylimit = 0;
+			int tmpmemorylimitlen = strlen(tmpmemorylimit);
+			bool istrue = true, iskb = false;
+			for (int i = 0; i < tmpmemorylimitlen; i++) {
+				if (isdigit(tmpmemorylimit[i])) {
+					memorylimit = memorylimit * 10 + tmpmemorylimit[i] - '0';
+				}
+				else if (tolower(tmpmemorylimit[i]) == 'k') {
+					iskb = true;
+					break;
+				}
+				else if (tolower(tmpmemorylimit[i]) == 'm') {
+					break;
+				}
+				else {
+					printf("输入错误，请重新输入！\n");
+					istrue = false;
+					break;
+				}
+			}
+			if (!iskb) memorylimit *= 1024;
+			if (!istrue) {
+				continue;
+			}
+			break;
+		}
+		#pragma endregion
 		#pragma region config_judgerules
 		//评测模式设置
 		printfcolor(COLOR_CYAN, "\n请输入数字序号来设置评测规则，多个规则请连写，如123，直接回车则100%相同则 AC，所有规则可重复，且有顺序处理，且同时处理标准输出和程序输出\n");
@@ -659,6 +717,7 @@ int main(int argc, char* argv[], char* envp[]) {
 		char msecondstrtmp[MAXN];
 		itoa(msecond, msecondstrtmp, 10);
 		fprintf(fp, "timeout: %s\n", msecond == INFINITE ? "infinite" : msecondstrtmp);
+		fprintf(fp, "memorylimit: %d\n", memorylimit);
 		fprintf(fp, "judgerules: %s\n", tmpjudgerules);
 		fclose(fp);
 		printf("\n基础配置保存成功！\n");
@@ -780,6 +839,7 @@ int main(int argc, char* argv[], char* envp[]) {
 		memset(msecondstrtmp, 0, sizeof msecondstrtmp);
 		itoa(msecond, msecondstrtmp, 10);
 		printf("timeout: %s\n", msecond == INFINITE ? "infinite" : msecondstrtmp);
+		printf("memorylimit: %d kB\n", memorylimit);
 		printf("judgerules: %s\n", tmpjudgerules);
 		printf("-----\n");
 		printf("source: %s\n", pathofsource);
@@ -946,8 +1006,8 @@ int main(int argc, char* argv[], char* envp[]) {
 		itoa(startnumlen, tmp, 10);
 		strcat(format, tmp);
 		strcat(format, "d");
-		int AC, WA, PE, TLE, RE;
-		AC = WA = PE = TLE = RE = 0;
+		int AC, WA, PE, TLE, RE, MLE;
+		AC = WA = PE = TLE = RE = MLE = 0;
 		FILE *outputrs = fopen("MuJudge-Console_JudgeResult.txt", "w+");
 		fprintf(outputrs, "MuJudge-Console 评测结果\n\n");
 		while (true) {
@@ -1045,16 +1105,20 @@ int main(int argc, char* argv[], char* envp[]) {
 			si.wShowWindow = SW_HIDE;
 
 			int rs = NULL;
-			int ms;
+			int ms, kb;
 			int exitcode = 0;
 			if (CreateProcess(".\\tmp\\program.exe", NULL, NULL, NULL, !isfreopen, CREATE_SUSPENDED, NULL, ".\\tmp", &si, &pi)) {
 				ResumeThread(pi.hThread);
 				clock_t start = clock();
 				int result = WaitForSingleObject(pi.hProcess, msecond);
 				clock_t finish = clock();
+				PROCESS_MEMORY_COUNTERS pmc;
+				GetProcessMemoryInfo(pi.hProcess, &pmc, sizeof pmc);
+				kb = pmc.PeakPagefileUsage / 1024;
 				ms = (int)(((double)(finish - start) / CLOCKS_PER_SEC) * 1000);
 				if (result == WAIT_OBJECT_0) {
 					rs = 1;
+					if (kb > memorylimit) rs = 4;
 				}
 				else if (result == WAIT_TIMEOUT) {
 					rs = 2;
@@ -1381,29 +1445,33 @@ int main(int argc, char* argv[], char* envp[]) {
 			#pragma region report
 				if (status == 1) {
 					printfcolor(COLOR_GREEN, "数据 %d 答案正确 AC", cnt);
-					fprintf(outputrs, "数据 %d | 文件 %s 答案正确 AC\n", cnt, filein.c_str());
+					fprintf(outputrs, "数据 %d | 文件 %s 答案正确 AC 耗时 %d ms 内存 %d kB\n", cnt, filein.c_str(), ms, kb);
 					AC++;
 				}
 				else if (status == 2) {
 					printfcolor(COLOR_YELLOW, "数据 %d 格式错误 PE", cnt);
-					fprintf(outputrs, "数据 %d | 文件 %s 格式错误 PE\n", cnt, filein.c_str());
+					fprintf(outputrs, "数据 %d | 文件 %s 格式错误 PE 耗时 %d ms 内存 %d kB\n", cnt, filein.c_str(), ms, kb);
+					fprintf(outputrs, "-----\n");
 					fprintf(outputrs, "标准输出 stdOutput: \n");
 					fprintf(outputrs, "%s\n", backupStdOutput.c_str());
 					fprintf(outputrs, "程序输出 programOutput: \n");
 					fprintf(outputrs, "%s\n", backupProgramOutput.c_str());
+					fprintf(outputrs, "-----\n");
 					PE++;
 				}
 				else if (status == 3) {
 					printfcolor(COLOR_RED, "数据 %d 答案错误 WA", cnt);
-					fprintf(outputrs, "数据 %d | 文件 %s 答案错误 WA\n", cnt, filein.c_str());
+					fprintf(outputrs, "数据 %d | 文件 %s 答案错误 WA 耗时 %d ms 内存 %d kB\n", cnt, filein.c_str(), ms, kb);
+					fprintf(outputrs, "-----\n");
 					fprintf(outputrs, "标准输出 stdOutput: \n");
 					fprintf(outputrs, "%s\n", backupStdOutput.c_str());
 					fprintf(outputrs, "程序输出 programOutput: \n");
 					fprintf(outputrs, "%s\n", backupProgramOutput.c_str());
+					fprintf(outputrs, "-----\n");
 					WA++;
 				}
 
-				printf(" 耗时 %d ms\n", ms);
+				printf(" 耗时 %d ms 内存 %d kB\n", ms, kb);
 			#pragma endregion
 			}
 	#pragma region reportother
@@ -1416,6 +1484,11 @@ int main(int argc, char* argv[], char* envp[]) {
 				printfcolor(COLOR_CYAN, "数据 %d 运行错误 RE\n", cnt);
 				fprintf(outputrs, "数据 %d | 文件 %s 运行错误 RE\n", cnt, filein.c_str());
 				RE++;
+			}
+			else if (rs == 4) {
+				printfcolor(COLOR_ORGINAL, "数据 %d 内存超限 MLE 内存 %d kB\n", cnt);
+				fprintf(outputrs, "数据 %d | 文件 %s 内存超限 MLE 内存 %d kB\n", cnt, filein.c_str(), kb);
+				MLE++;
 			}
 			fprintf(outputrs, "\n");
 	#pragma endregion
@@ -1450,13 +1523,17 @@ int main(int argc, char* argv[], char* envp[]) {
 			printfcolor(COLOR_YELLOW, "格式错误 PE: %d\n", PE);
 			fprintf(outputrs, "格式错误 PE: %d\n", PE);
 		}
+		if (RE != 0) {
+			printfcolor(COLOR_CYAN, "运行错误 RE: %d\n", RE);
+			fprintf(outputrs, "运行错误 RE: %d\n", RE);
+		}
 		if (TLE != 0) {
 			printfcolor(COLOR_BLUE, "时间超限 TLE: %d\n", TLE);
 			fprintf(outputrs, "时间超限 TLE: %d\n", TLE);
 		}
-		if (RE != 0) {
-			printfcolor(COLOR_CYAN, "运行错误 RE: %d\n", RE);
-			fprintf(outputrs, "运行错误 RE: %d\n", RE);
+		if (MLE != 0) {
+			printfcolor(COLOR_CYAN, "内存超限 MLE: %d\n", MLE);
+			fprintf(outputrs, "内存超限 MLE: %d\n", MLE);
 		}
 		fclose(outputrs);
 		printf("\n");

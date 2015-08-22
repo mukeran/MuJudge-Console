@@ -34,4 +34,7 @@
 #include <direct.h>
 #include <cstdio>
 #include <algorithm>
+#include <Psapi.h>
+#pragma comment(lib, "psapi.lib")
+
 // TODO:  在此处引用程序需要的其他头文件
