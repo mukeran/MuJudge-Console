@@ -27,7 +27,7 @@
 #endif // _AFX_NO_AFXCMN_SUPPORT
 
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 #include <conio.h>
 #include <cstdlib>
 #include <ctime>
